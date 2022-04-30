@@ -1,24 +1,31 @@
 import { useQuery } from "@apollo/client";
 import { useState } from "react";
 import { Book_Contents } from "../resources/books.resources";
-// import Page from "./Page";
+import BounceLoader from "react-spinners/BounceLoader";
+import Modal from "./Modal";
 
 function Home() {
     const { loading, data } = useQuery(Book_Contents);
-    const [currentPage, setCurrentPage] = useState(0);
-    if (!loading) {
-        console.log(data.book.pages[1].content[2], '\n');
-        console.log(data.book.pages[1]);
-    }
+    const [leftPage, setLeftPage] = useState(1);
+    const [rightPage, setRightPage] = useState(2);
+    const [openModal, setOpenModal] = useState(false);
+    const [word, setWord] = useState("");
 
     // Open next page function
     const goToNextPage = () => {
-        setCurrentPage(currentPage + 1);
+        let bookLen = data.book.pages.length;
+        if (rightPage < bookLen) {
+            setRightPage(rightPage + 2);
+            setLeftPage(leftPage + 2);
+        }
     }
 
     // Open previous page function
     const goToPreviousPage = () => {
-        if (currentPage > 0) setCurrentPage(currentPage - 1);
+        if (leftPage !== 1 && rightPage !== 2) {
+            setLeftPage(leftPage - 2);
+            setRightPage(rightPage - 2);
+        }
     }
 
     // Get String value
@@ -31,29 +38,42 @@ function Home() {
         let startOffset = range?.startOffset;
         // Filter tokens using the startOffset
         let strArr = data.book.pages[page].tokens.filter((token: any) => (token.position[0] <= startOffset!) && (token.position[1] >= startOffset!));
-        alert(strArr[0].value)
+        // set word state
+        setWord(strArr[0].value);
+        // open Modal
+        handleOpenModal();
     }
 
-    if (loading) return <div> Loading! </div>
+    // Function to open modal
+    const handleOpenModal = () => setOpenModal(true);
+
+    // Function to close modal
+    const handleCloseModal = () => setOpenModal(false);
+
+
+    if (loading) return <div className="loader"><BounceLoader /></div>
 
     return (
-        <div className="page">
-            <header>
-                <h5>Virtual Reading Coach</h5>
-            </header>
-            <main>
-                <div className="leftPage">
-                    <pre onClick={() => getStringValue(currentPage)}>{data.book.pages[currentPage].content}</pre>
-                    <button onClick={goToPreviousPage} className="leftPageBtn">Left</button>
-                    <div className="leftPageNo">1</div>
-                </div>
-                <div className="rightPage">
-                    <pre onClick={() => getStringValue(currentPage + 1)}>{data.book.pages[currentPage + 1].content}</pre>
-                    <button onClick={goToNextPage} className="rightPageBtn">Right</button>
-                    <div className="rightPageNo">2</div>
-                </div>
-            </main>
-        </div>
+        <>
+            <Modal isOpen={openModal} text={word} onRequestClose={handleCloseModal} />
+            <div className="page">
+                <header>
+                    <h2>Virtual Reading Coach</h2>
+                </header>
+                <main>
+                    <div className="leftPage">
+                        <p onClick={() => getStringValue(leftPage - 1)}>{data.book.pages[leftPage - 1].content}</p>
+                        <button onClick={goToPreviousPage} className="leftPageBtn">Back</button>
+                        <div className="leftPageNo">{leftPage}</div>
+                    </div>
+                    <div className="rightPage">
+                        <p onClick={() => getStringValue(rightPage - 1)}>{data.book.pages[rightPage - 1].content}</p>
+                        <button onClick={goToNextPage} className="rightPageBtn">Next</button>
+                        <div className="rightPageNo">{rightPage}</div>
+                    </div>
+                </main>
+            </div>
+        </>
     );
 }
 
