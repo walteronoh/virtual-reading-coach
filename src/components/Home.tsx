@@ -1,5 +1,5 @@
 import { useQuery } from "@apollo/client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Book_Contents } from "../resources/books.resources";
 import BounceLoader from "react-spinners/BounceLoader";
 import Modal from "./Modal";
@@ -10,6 +10,14 @@ function Home() {
     const [rightPage, setRightPage] = useState(2);
     const [openModal, setOpenModal] = useState(false);
     const [word, setWord] = useState("");
+    const msg = new SpeechSynthesisUtterance();
+
+    useEffect(() => {
+        if(word) {
+            msg.text = word;
+            window.speechSynthesis.speak(msg);
+        }
+    }, [word])
 
     // Open next page function
     const goToNextPage = () => {
